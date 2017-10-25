@@ -16,17 +16,61 @@ describe('PjayClient', function() {
 		expect(client.settings).to.deep.equal({});
 	});
 
+	describe('#getRequestSettings', function() {
+		const method = 'some-method';
+		const id = 'some-id';
+		let client, params, requestObject;
+
+		beforeEach(function() {
+			client = new PjayClient({ uri: 'some-uri' });
+			params = { param: 'some-param' };
+			requestObject = { id: 'request-object' };
+			sandbox.stub(utils, 'getRequestObject').returns(requestObject);
+		});
+
+		it('returns request settings object from instance settings and args', function() {
+			let result = client.getRequestSettings(method, params, id)
+
+			expect(utils.getRequestObject).to.be.calledOnce;
+			expect(utils.getRequestObject).to.be.calledOn(utils);
+			expect(utils.getRequestObject).to.be.calledWith(method, params, id);
+			expect(result).to.deep.equal({
+				method: 'POST',
+				uri: client.settings.uri,
+				body: requestObject,
+				json: true
+			});
+		});
+
+		it('includes headers from instance settings, if any', function() {
+			client.settings.headers = { header: 'some-header' };
+
+			let result = client.getRequestSettings(method, params, id)
+
+			expect(utils.getRequestObject).to.be.calledOnce;
+			expect(utils.getRequestObject).to.be.calledOn(utils);
+			expect(utils.getRequestObject).to.be.calledWith(method, params, id);
+			expect(result).to.deep.equal({
+				uri: client.settings.uri,
+				method: 'POST',
+				headers: client.settings.headers,
+				body: requestObject,
+				json: true
+			});
+		});
+	});
+
 	describe('#request', function() {
 		const method = 'some-method';
 		const id = 'some-id';
 		let client, params, requestObject, methodResult;
 
 		beforeEach(function() {
-			client = new PjayClient({ uri: 'some-uri' });
+			client = new PjayClient();
 			params = { param: 'some-param' };
-			requestObject = { id: 'request-object' };
+			requestSettings = { settings: 'request-settings' };
 			methodResult = { id: 'method-result' };
-			sandbox.stub(utils, 'getRequestObject').returns(requestObject);
+			sandbox.stub(client, 'getRequestSettings').returns(requestSettings);
 			sandbox.stub(utils, 'request').resolves({
 				error: null,
 				result: methodResult
@@ -36,49 +80,20 @@ describe('PjayClient', function() {
 		it('performs request and resolves with method result', function() {
 			return client.request(method, params, id)
 				.then((result) => {
-					expect(utils.getRequestObject).to.be.calledOnce;
-					expect(utils.getRequestObject).to.be.calledOn(utils);
-					expect(utils.getRequestObject).to.be.calledWith(
+					expect(client.getRequestSettings).to.be.calledOnce;
+					expect(client.getRequestSettings).to.be.calledOn(client);
+					expect(client.getRequestSettings).to.be.calledWith(
 						method,
 						params,
 						id
 					);
 					expect(utils.request).to.be.calledOnce;
 					expect(utils.request).to.be.calledOn(utils);
-					expect(utils.request).to.be.calledWith({
-						uri: client.settings.uri,
-						method: 'POST',
-						body: requestObject,
-						json: true
-					});
+					expect(utils.request).to.be.calledWith(requestSettings);
 					expect(result).to.equal(methodResult);
 				});
 		});
 
-		it('includes headers from instance settings, if any', function() {
-			client.settings.headers = { header: 'some-header' };
-
-			return client.request(method, params, id)
-				.then((result) => {
-					expect(utils.getRequestObject).to.be.calledOnce;
-					expect(utils.getRequestObject).to.be.calledOn(utils);
-					expect(utils.getRequestObject).to.be.calledWith(
-						method,
-						params,
-						id
-					);
-					expect(utils.request).to.be.calledOnce;
-					expect(utils.request).to.be.calledOn(utils);
-					expect(utils.request).to.be.calledWith({
-						uri: client.settings.uri,
-						method: 'POST',
-						headers: client.settings.headers,
-						body: requestObject,
-						json: true
-					});
-					expect(result).to.equal(methodResult);
-				});
-		});
 
 		it('rejects with method error, if any', function() {
 			let methodError = new Error('method error');
