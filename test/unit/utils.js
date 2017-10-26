@@ -1,8 +1,11 @@
 const utils = require('../../lib/utils');
 const rpn = require('request-promise-native');
 const uuid = require('uuid');
+const XError = require('xerror');
 const zstreams = require('zstreams');
 const { ArrayReadableStream } = zstreams;
+
+require('../../lib/error-codes');
 
 describe('utils', function() {
 	describe('::request', function() {
@@ -88,15 +91,19 @@ describe('utils', function() {
 	});
 
 	describe('::requestObjectStream', function() {
-		it('request a line stream, with each line parsed as json', function() {
-			let settings = { setting: 'some setting' };
+		let settings;
+
+		beforeEach(function() {
+			settings = { setting: 'some setting' };
 			sandbox.stub(utils, 'requestLineStream').returns(
 				new ArrayReadableStream([
 					'{"foo":"bar"}',
 					'{"baz": "qux"}'
 				])
 			);
+		});
 
+		it('requests a line stream, with each line parsed as json', function() {
 			return utils.requestObjectStream(settings)
 				.intoArray()
 				.then((result) => {
@@ -107,6 +114,25 @@ describe('utils', function() {
 						{ foo: 'bar' },
 						{ baz: 'qux' }
 					]);
+				});
+		});
+
+		it('wraps json parsing error', function() {
+			let parsingError = new Error('parsing error');
+			sandbox.stub(JSON, 'parse').throws(parsingError);
+
+			return utils.requestObjectStream(settings)
+				.intoArray()
+				.then(() => {
+					throw new Error('Promise should have rejected.');
+				}, (err) => {
+					expect(err).to.be.an.instanceof(XError);
+					expect(err.code).to.equal(XError.INVALID_OBJECT);
+					expect(err.message).to.equal(
+						'Received invalid JSON line from request stream.'
+					);
+					expect(err.data).to.deep.equal({ line: '{"foo":"bar"}' });
+					expect(err.cause).to.equal(parsingError);
 				});
 		});
 	});

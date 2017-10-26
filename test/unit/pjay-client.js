@@ -3,6 +3,8 @@ const { ArrayReadableStream } = require('zstreams');
 const utils = require('../../lib/utils');
 const XError = require('xerror');
 
+require('../../lib/error-codes');
+
 describe('PjayClient', function() {
 	it('stores provided settings', function() {
 		let settings = { foo: 'bar' };
@@ -97,15 +99,37 @@ describe('PjayClient', function() {
 		});
 
 
-		it('rejects with method error, if any', function() {
-			let methodError = new Error('method error');
-			utils.request.resolves({ error: methodError, result: null });
+		it('rejects with revived method error, if any', function() {
+			let error = {
+				code: 'error_code',
+				message: 'error message',
+				data: { errorData: 'some error data' }
+			};
+			utils.request.resolves({ error, result: null });
 
 			return client.request(method, params, id)
 				.then(() => {
 					throw new Error('Promise should have rejected.');
 				}, (err) => {
-					expect(err).to.equal(methodError);
+					expect(err).to.be.an.instanceof(XError);
+					expect(err.code).to.equal(error.code);
+					expect(err.message).to.equal(error.message);
+					expect(err.data).to.equal(error.data);
+				});
+		});
+
+		it('wraps request error, if any', function() {
+			let requestError = new Error('request error');
+			utils.request.rejects(requestError);
+
+			return client.request(method, params, id)
+				.then(() => {
+					throw new Error('Promise should have rejected');
+				}, (err) => {
+					expect(err).to.be.an.instanceof(XError);
+					expect(err.code).to.equal(XError.REQUEST_FAILED);
+					expect(err.message).to.equal('request error');
+					expect(err.cause).to.equal(requestError);
 				});
 		});
 	});
@@ -152,13 +176,17 @@ describe('PjayClient', function() {
 				});
 		});
 
-		it('throws stream error object, if any', function() {
-			let streamError = new Error('stream error');
+		it('emits revived error from stream, if any', function() {
+			let error = {
+				code: 'error_code',
+				message: 'error message',
+				data: { errorData: 'some error data' }
+			};
 			utils.requestObjectStream.returns(
 				new ArrayReadableStream([
 					{ data: { foo: 'bar' } },
 					{ data: { baz: 'qux' } },
-					{ error: streamError }
+					{ error }
 				])
 			);
 
@@ -167,11 +195,14 @@ describe('PjayClient', function() {
 				.then(() => {
 					throw new Error('Promise should have rejected');
 				}, (err) => {
-					expect(err).to.equal(streamError);
+					expect(err).to.be.an.instanceof(XError);
+					expect(err.code).to.equal(error.code);
+					expect(err.message).to.equal(error.message);
+					expect(err.data).to.equal(error.data);
 				});
 		});
 
-		it('throws if stream ends before success object', function() {
+		it('emits unexpected end if stream ends before success', function() {
 			utils.requestObjectStream.returns(
 				new ArrayReadableStream([
 					{ data: { foo: 'bar' } },
@@ -185,9 +216,10 @@ describe('PjayClient', function() {
 					throw new Error('Promise should have rejected');
 				}, (err) => {
 					expect(err).to.be.an.instanceof(XError);
-					expect(err.code).to.equal(XError.INTERNAL_ERROR);
+					expect(err.code).to.equal(XError.UNEXPECTED_END);
 					expect(err.message).to.equal(
-						'Request stream ended before success indicator'
+						'Request stream ended before a success indicator ' +
+						'was received.'
 					);
 				});
 		});
