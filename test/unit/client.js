@@ -1,19 +1,19 @@
-const PjayClient = require('../../lib/pjay-client');
+const Client = require('../../lib/client');
 const { ArrayReadableStream } = require('zstreams');
 const utils = require('../../lib/utils');
 const XError = require('xerror');
 
-describe('PjayClient', function() {
+describe('Client', function() {
 	it('stores provided settings', function() {
 		let settings = { foo: 'bar' };
 
-		let client = new PjayClient(settings);
+		let client = new Client(settings);
 
 		expect(client.settings).to.equal(settings);
 	});
 
 	it('defaults to empty settings object', function() {
-		let client = new PjayClient();
+		let client = new Client();
 
 		expect(client.settings).to.deep.equal({});
 	});
@@ -24,7 +24,7 @@ describe('PjayClient', function() {
 		let client, params, requestObject;
 
 		beforeEach(function() {
-			client = new PjayClient({ uri: 'some-uri' });
+			client = new Client({ uri: 'some-uri' });
 			params = { param: 'some-param' };
 			requestObject = { id: 'request-object' };
 			sandbox.stub(utils, 'getRequestObject').returns(requestObject);
@@ -68,7 +68,7 @@ describe('PjayClient', function() {
 		let client, params, requestSettings, methodResult;
 
 		beforeEach(function() {
-			client = new PjayClient();
+			client = new Client();
 			params = { param: 'some-param' };
 			requestSettings = { settings: 'request-settings' };
 			methodResult = { id: 'method-result' };
@@ -136,7 +136,7 @@ describe('PjayClient', function() {
 		let client, params, requestSettings;
 
 		beforeEach(function() {
-			client = new PjayClient();
+			client = new Client();
 			params = { param: 'some param' };
 			requestSettings = { setting: 'some request setting' };
 			sandbox.stub(client, 'getRequestSettings').returns(requestSettings);

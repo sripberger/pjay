@@ -1,9 +1,9 @@
-const { PjayClient } = require('../../lib');
+const { Client } = require('../../lib');
 const child_process = require('child_process');
 const path = require('path');
 const XError = require('xerror');
 
-describe('PjayClient', function() {
+describe('Client', function() {
 	const apiPath = path.resolve(__dirname, '../bin/test-api.js');
 	let api, port, client;
 
@@ -26,7 +26,7 @@ describe('PjayClient', function() {
 	});
 
 	beforeEach(function() {
-		client = new PjayClient({
+		client = new Client({
 			uri: `http://localhost:${port}/v1/jsonrpc`
 		});
 	});
