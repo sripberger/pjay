@@ -136,4 +136,21 @@ describe('utils', function() {
 				});
 		});
 	});
+
+	describe('::reviveError', function() {
+		it('returns a plain object as an XError', function() {
+			let obj = {
+				code: 'error_code',
+				message: 'error message',
+				data: { errorData: 'some error data' }
+			};
+
+			let result = utils.reviveError(obj);
+
+			expect(result).to.be.an.instanceof(XError);
+			expect(result.code).to.equal(obj.code);
+			expect(result.message).to.equal(obj.message);
+			expect(result.data).to.equal(obj.data);
+		});
+	});
 });

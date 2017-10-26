@@ -100,21 +100,19 @@ describe('PjayClient', function() {
 
 
 		it('rejects with revived method error, if any', function() {
-			let error = {
-				code: 'error_code',
-				message: 'error message',
-				data: { errorData: 'some error data' }
-			};
+			let error = { errorProperty: 'some error property' };
+			let revivedError = new XError('revived error');
+			sandbox.stub(utils, 'reviveError').returns(revivedError);
 			utils.request.resolves({ error, result: null });
 
 			return client.request(method, params, id)
 				.then(() => {
 					throw new Error('Promise should have rejected.');
 				}, (err) => {
-					expect(err).to.be.an.instanceof(XError);
-					expect(err.code).to.equal(error.code);
-					expect(err.message).to.equal(error.message);
-					expect(err.data).to.equal(error.data);
+					expect(utils.reviveError).to.be.calledOnce;
+					expect(utils.reviveError).to.be.calledOn(utils);
+					expect(utils.reviveError).to.be.calledWith(error);
+					expect(err).to.equal(revivedError);
 				});
 		});
 
@@ -128,7 +126,7 @@ describe('PjayClient', function() {
 				}, (err) => {
 					expect(err).to.be.an.instanceof(XError);
 					expect(err.code).to.equal(XError.REQUEST_FAILED);
-					expect(err.message).to.equal('request error');
+					expect(err.message).to.equal(requestError.message);
 					expect(err.cause).to.equal(requestError);
 				});
 		});
@@ -177,11 +175,9 @@ describe('PjayClient', function() {
 		});
 
 		it('emits revived error from stream, if any', function() {
-			let error = {
-				code: 'error_code',
-				message: 'error message',
-				data: { errorData: 'some error data' }
-			};
+			let error = { errorProperty: 'some error property' };
+			let revivedError = new XError('revived error');
+			sandbox.stub(utils, 'reviveError').returns(revivedError);
 			utils.requestObjectStream.returns(
 				new ArrayReadableStream([
 					{ data: { foo: 'bar' } },
@@ -195,10 +191,10 @@ describe('PjayClient', function() {
 				.then(() => {
 					throw new Error('Promise should have rejected');
 				}, (err) => {
-					expect(err).to.be.an.instanceof(XError);
-					expect(err.code).to.equal(error.code);
-					expect(err.message).to.equal(error.message);
-					expect(err.data).to.equal(error.data);
+					expect(utils.reviveError).to.be.calledOnce;
+					expect(utils.reviveError).to.be.calledOn(utils);
+					expect(utils.reviveError).to.be.calledWith(error);
+					expect(err).to.equal(revivedError);
 				});
 		});
 
