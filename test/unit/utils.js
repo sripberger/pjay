@@ -1,6 +1,8 @@
 const utils = require('../../lib/utils');
 const rpn = require('request-promise-native');
 const uuid = require('uuid');
+const zstreams = require('zstreams');
+const { ArrayReadableStream } = zstreams;
 
 describe('utils', function() {
 	describe('::request', function() {
@@ -54,6 +56,58 @@ describe('utils', function() {
 				method,
 				id
 			});
+		});
+	});
+
+	describe('::requestLineStream', function() {
+		it('requests a stream split on line endings', function() {
+			let settings = { setting: 'some setting' };
+			sandbox.stub(zstreams, 'request').returns(
+				new ArrayReadableStream([
+					'foo-bar-',
+					'baz\nqux\n',
+					'baz-bar\n',
+					'foo\n'
+				])
+			);
+
+			return utils.requestLineStream(settings)
+				.intoArray()
+				.then((result) => {
+					expect(zstreams.request).to.be.calledOnce;
+					expect(zstreams.request).to.be.calledOn(zstreams);
+					expect(zstreams.request).to.be.calledWith(settings);
+					expect(result).to.deep.equal([
+						'foo-bar-baz',
+						'qux',
+						'baz-bar',
+						'foo'
+					]);
+				});
+		});
+	});
+
+	describe('::requestObjectStream', function() {
+		it('request a line stream, with each line parsed as json', function() {
+			let settings = { setting: 'some setting' };
+			sandbox.stub(utils, 'requestLineStream').returns(
+				new ArrayReadableStream([
+					'{"foo":"bar"}',
+					'{"baz": "qux"}'
+				])
+			);
+
+			return utils.requestObjectStream(settings)
+				.intoArray()
+				.then((result) => {
+					expect(utils.requestLineStream).to.be.calledOnce;
+					expect(utils.requestLineStream).to.be.calledOn(utils);
+					expect(utils.requestLineStream).to.be.calledWith(settings);
+					expect(result).to.deep.equal([
+						{ foo: 'bar' },
+						{ baz: 'qux' }
+					]);
+				});
 		});
 	});
 });
