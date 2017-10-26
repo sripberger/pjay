@@ -3,8 +3,6 @@ const { ArrayReadableStream } = require('zstreams');
 const utils = require('../../lib/utils');
 const XError = require('xerror');
 
-require('../../lib/error-codes');
-
 describe('PjayClient', function() {
 	it('stores provided settings', function() {
 		let settings = { foo: 'bar' };

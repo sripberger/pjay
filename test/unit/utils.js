@@ -5,8 +5,6 @@ const XError = require('xerror');
 const zstreams = require('zstreams');
 const { ArrayReadableStream } = zstreams;
 
-require('../../lib/error-codes');
-
 describe('utils', function() {
 	describe('::request', function() {
 		it('is request-promise-native module', function() {
