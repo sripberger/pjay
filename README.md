@@ -1,13 +1,13 @@
 # pjay
 
-A simple promise-oriented client for JSON-RPC 2.0 over HTTP, with support for
+A simple, promise-oriented client for JSON-RPC 2.0 over HTTP, with support for
 non-standard streaming responses as defined by
 [yaar](https://www.npmjs.com/package/yaar).
 
 
 ## Basic Usage
 
-JSON-RPC calls are encapsulated by the `pjay.Client` claass and its `#request`
+JSON-RPC calls are encapsulated by the `pjay.Client` class and its `#request`
 method:
 
 ```js
