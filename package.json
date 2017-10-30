@@ -8,7 +8,8 @@
     "json-rpc",
     "jsonrpc",
     "json",
-    "rpc"
+    "rpc",
+    "yaar"
   ],
   "repository": "github:sripberger/pjay.git",
   "main": "lib/index.js",
