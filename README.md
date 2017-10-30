@@ -50,6 +50,7 @@ Readable:
 
 ```js
 client.requestStream('some-streaming-method', { /* keyed params here */ })
+	.through((data) => `${JSON.stringify(data)}\n`)
 	.intoFile('/path/to/file')
 	.then(() => {
 		// Will resolve when all data has been written to the file.
