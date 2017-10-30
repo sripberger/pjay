@@ -18,7 +18,7 @@ describe('Client', function() {
 		expect(client.settings).to.deep.equal({});
 	});
 
-	describe('#getRequestSettings', function() {
+	describe('#_getRequestSettings', function() {
 		const method = 'some-method';
 		const id = 'some-id';
 		let client, params, requestObject;
@@ -31,7 +31,7 @@ describe('Client', function() {
 		});
 
 		it('returns request settings object from instance settings and args', function() {
-			let result = client.getRequestSettings(method, params, id);
+			let result = client._getRequestSettings(method, params, id);
 
 			expect(utils.getRequestObject).to.be.calledOnce;
 			expect(utils.getRequestObject).to.be.calledOn(utils);
@@ -47,7 +47,7 @@ describe('Client', function() {
 		it('includes headers from instance settings, if any', function() {
 			client.settings.headers = { header: 'some-header' };
 
-			let result = client.getRequestSettings(method, params, id);
+			let result = client._getRequestSettings(method, params, id);
 
 			expect(utils.getRequestObject).to.be.calledOnce;
 			expect(utils.getRequestObject).to.be.calledOn(utils);
@@ -72,7 +72,9 @@ describe('Client', function() {
 			params = { param: 'some-param' };
 			requestSettings = { settings: 'request-settings' };
 			methodResult = { id: 'method-result' };
-			sandbox.stub(client, 'getRequestSettings').returns(requestSettings);
+			sandbox.stub(client, '_getRequestSettings').returns(
+				requestSettings
+			);
 			sandbox.stub(utils, 'request').resolves({
 				error: null,
 				result: methodResult
@@ -82,9 +84,9 @@ describe('Client', function() {
 		it('performs request and resolves with method result', function() {
 			return client.request(method, params, id)
 				.then((result) => {
-					expect(client.getRequestSettings).to.be.calledOnce;
-					expect(client.getRequestSettings).to.be.calledOn(client);
-					expect(client.getRequestSettings).to.be.calledWith(
+					expect(client._getRequestSettings).to.be.calledOnce;
+					expect(client._getRequestSettings).to.be.calledOn(client);
+					expect(client._getRequestSettings).to.be.calledWith(
 						method,
 						params,
 						id
@@ -139,7 +141,9 @@ describe('Client', function() {
 			client = new Client();
 			params = { param: 'some param' };
 			requestSettings = { setting: 'some request setting' };
-			sandbox.stub(client, 'getRequestSettings').returns(requestSettings);
+			sandbox.stub(client, '_getRequestSettings').returns(
+				requestSettings
+			);
 			sandbox.stub(utils, 'requestObjectStream').returns(
 				new ArrayReadableStream([
 					{ data: { foo: 'bar' } },
@@ -153,9 +157,9 @@ describe('Client', function() {
 			return client.requestStream(method, params, id)
 				.intoArray()
 				.then((result) => {
-					expect(client.getRequestSettings).to.be.calledOnce;
-					expect(client.getRequestSettings).to.be.calledOn(client);
-					expect(client.getRequestSettings).to.be.calledWith(
+					expect(client._getRequestSettings).to.be.calledOnce;
+					expect(client._getRequestSettings).to.be.calledOn(client);
+					expect(client._getRequestSettings).to.be.calledWith(
 						method,
 						params,
 						id
